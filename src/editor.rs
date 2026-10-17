@@ -1,4 +1,4 @@
-use crate::slides::*;
+use crate::{Arguments, slides::*};
 use macroquad::prelude::*;
 
 use macroquad::ui::widgets::{ProgressBar, Slider};
@@ -19,6 +19,7 @@ struct State {
 }
 
 const SIDEBAR_PROPORTION: f32 = 0.33;
+const SIDEBAR_MAX_SIZE: f32 = 500.0;
 
 #[macroquad::main("Expound")]
 pub async fn main() {
@@ -28,7 +29,6 @@ pub async fn main() {
         let height = window::screen_height();
 
         ui::root_ui().label(None, "hello megaui");
-        ui::root_ui().label(None, "hello megaui");
         if ui::root_ui().button(None, "Push me") {
             println!("pushed");
         }
@@ -36,7 +36,10 @@ pub async fn main() {
         widgets::Window::new(
             hash!(),
             vec2(0.0, 0.0),
-            vec2(width * SIDEBAR_PROPORTION, height),
+            vec2(
+                f32::min(SIDEBAR_MAX_SIZE, width * SIDEBAR_PROPORTION),
+                height,
+            ),
         )
         .label("Sidebar")
         .movable(false)
