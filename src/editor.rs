@@ -1,6 +1,8 @@
 use crate::{Arguments, Presentation, expfile, slides::*};
+use macroquad::input::KeyCode::ScrollLock;
 use macroquad::prelude::*;
 
+use macroquad::ui::Skin;
 use macroquad::ui::{
     self, hash, root_ui,
     widgets::{self, Group},
@@ -19,12 +21,16 @@ struct State {
 }
 
 const SIDEBAR_PROPORTION: f32 = 0.33;
-const SIDEBAR_MAX_SIZE: f32 = 500.0;
+const SIDEBAR_MAX_SIZE: f32 = 500.;
+const MARGIN: f32 = 12.;
+const SLIDE_PREVIEW_HEIGHT: f32 = 90. + MARGIN * 2.;
+const SCROLLBAR_WIDTH: f32 = 12.;
 
 #[macroquad::main("Expound")]
 pub async fn main() {
     let args: Vec<String> = env::args().collect();
 
+    let skin = create_skin();
     let mut file: Option<Presentation>;
     let mut arguments = Arguments::default();
     if args.len() >= 2 {
@@ -43,7 +49,9 @@ pub async fn main() {
     }
 
     loop {
+        root_ui().push_skin(&skin);
         draw(&mut file);
+        root_ui().pop_skin();
         next_frame().await;
     }
 }
@@ -57,47 +65,92 @@ fn draw(file: &mut Option<Presentation>) {
     if ui::root_ui().button(None, "Push me") {
         println!("pushed");
     }
+    let sidebar_width = f32::min(SIDEBAR_MAX_SIZE, width * SIDEBAR_PROPORTION);
 
     widgets::Window::new(
         hash!(),
         vec2(0.0, 0.0),
-        vec2(
-            f32::min(SIDEBAR_MAX_SIZE, width * SIDEBAR_PROPORTION),
-            height,
-        ),
+        vec2(sidebar_width + SCROLLBAR_WIDTH, height),
     )
     .label("Sidebar")
     .movable(false)
-    .ui(&mut *root_ui(), |ui| {
-        ui.label(vec2(8.0, 8.0), "title");
-        ui.button(vec2(8.0, 64.0), "button");
-
-        /*match &file {
-            Some(i) => draw_slides_list(ui, i),
-            None => {}
-        }*/
+    .ui(&mut *root_ui(), |ui| match &file {
+        Some(i) => draw_slides_list(ui, i, sidebar_width),
+        None => {}
     });
 }
 
-/*fn draw_slides_list(ui: &mut ui::Ui, file: Presentation) {
+fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32) {
     for i in 0..file.slides.len() {
-        Group::new(hash!("shop", i), Vec2::new(300., 80.)).ui(ui, |ui| {
-            let mut data = &mut file.slides[i];
-            ui.label(Vec2::new(10., 10.), &format!("{}", data.title));
-
+        Group::new(
+            hash!("slide", i),
+            Vec2::new(width - MARGIN * 2., SLIDE_PREVIEW_HEIGHT),
+        )
+        .layout(ui::Layout::Vertical)
+        .ui(ui, |ui| {
+            let data = &file.slides[i];
+            ui.label(Vec2::new(0., 0.), &format!("{}", data.title));
             for body in 0..data.paragraphs.len() {
                 ui.label(
-                    Vec2::new(10., 40. + 30. * body as f32),
+                    Vec2::new(0., 0. + 30. + 30. * body as f32),
                     &data.paragraphs[body],
                 );
             }
-            //ui.label(Vec2::new(200., 58.), &format!("{} kr", 800));
-            if ui.button(Vec2::new(260., 55.), "edit") {}
+
             let texture = match &data.preview {
-                Some(i) => widgets::Texture::new(*i).ui(ui),
+                Some(i) => widgets::Texture::new(i.clone())
+                    .position(Vec2::new(width - i.width() - MARGIN * 4., 0.))
+                    .size(160., 90.)
+                    .ui(ui),
                 None => false,
             };
-            println!("texture is {}", texture)
         });
     }
-}*/
+}
+
+fn create_skin() -> Skin {
+    let window_style = root_ui()
+        .style_builder()
+        .margin(RectOffset {
+            left: MARGIN,
+            right: MARGIN,
+            bottom: MARGIN,
+            top: MARGIN,
+        })
+        .build();
+    let group_style = root_ui()
+        .style_builder()
+        .margin(RectOffset {
+            left: MARGIN,
+            right: MARGIN,
+            bottom: MARGIN,
+            top: MARGIN,
+        })
+        .color(Color::from_rgba(34, 34, 34, 68))
+        .color_hovered(Color::from_rgba(34, 153, 34, 68))
+        .color_selected(Color::from_rgba(34, 34, 255, 255))
+        .color_selected_hovered(Color::from_rgba(55, 55, 55, 68))
+        .build();
+    let scrollbar_style = root_ui()
+        .style_builder()
+        .margin(RectOffset {
+            left: MARGIN,
+            right: MARGIN,
+            bottom: MARGIN,
+            top: MARGIN,
+        })
+        .color(Color::from_rgba(34, 34, 34, 68))
+        .color_hovered(Color::from_rgba(34, 153, 34, 68))
+        .color_selected(Color::from_rgba(34, 34, 255, 255))
+        .color_selected_hovered(Color::from_rgba(55, 55, 55, 68))
+        .build();
+    let label_style = root_ui().style_builder().build();
+    Skin {
+        window_style,
+        scroll_width: SCROLLBAR_WIDTH,
+        label_style,
+        group_style,
+        margin: 2.,
+        ..root_ui().default_skin()
+    }
+}
