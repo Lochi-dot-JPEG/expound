@@ -39,6 +39,8 @@ pub async fn main() {
     } else {
         file = None;
     }
+    clear_background(BLACK);
+
     match &mut file {
         Some(i) => {
             for slide in &mut i.slides {
@@ -48,6 +50,14 @@ pub async fn main() {
         None => {}
     }
 
+    match &mut file {
+        Some(i) => {
+            for slide in &mut i.slides {
+                slide.render();
+            }
+        }
+        None => {}
+    }
     loop {
         root_ui().push_skin(&skin);
         draw(&mut file);
@@ -97,7 +107,7 @@ fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32) {
                 );
             }
 
-            let texture = match &data.preview {
+            let texture = match data.preview.clone() {
                 Some(i) => widgets::Texture::new(i.clone())
                     .position(Vec2::new(width - i.width() - MARGIN * 4., 0.))
                     .size(160., 90.)
