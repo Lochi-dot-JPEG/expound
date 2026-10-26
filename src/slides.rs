@@ -1,11 +1,14 @@
-use macroquad::{text, texture::Texture2D, ui::widgets};
+use macroquad::{texture::Texture2D, ui::widgets};
 
+mod layouts;
 mod render;
+use uuid::Uuid;
 pub struct Slide {
     pub title: String,
     pub paragraphs: Vec<String>,
     pub images: Vec<SlideImage>,
     pub preview: Option<Texture2D>,
+    pub uuid: Uuid,
 }
 
 impl Slide {
@@ -31,11 +34,12 @@ impl Slide {
             paragraphs: paragraphs,
             images: images,
             preview: None,
+            uuid: Uuid::new_v4(),
         }
     }
 
-    pub fn render(&mut self) {
-        render::render_slide(self)
+    pub async fn render(&mut self) {
+        render::render_slide(self).await
     }
 }
 pub struct SlideImage {
@@ -50,5 +54,3 @@ impl SlideImage {
         }
     }
 }
-
-fn render() {}

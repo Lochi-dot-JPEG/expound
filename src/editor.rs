@@ -8,7 +8,7 @@ use macroquad::ui::{
     widgets::{self, Group},
 };
 use macroquad::window;
-use std::env;
+use std::{env, println};
 
 enum Messages {
     AddSlide,
@@ -43,21 +43,17 @@ pub async fn main() {
 
     match &mut file {
         Some(i) => {
+            let mut waits = Vec::new();
             for slide in &mut i.slides {
-                slide.render();
+                waits.push(slide.render());
+            }
+            for wait in waits {
+                wait.await;
             }
         }
         None => {}
     }
 
-    match &mut file {
-        Some(i) => {
-            for slide in &mut i.slides {
-                slide.render();
-            }
-        }
-        None => {}
-    }
     loop {
         root_ui().push_skin(&skin);
         draw(&mut file);
@@ -67,6 +63,7 @@ pub async fn main() {
 }
 
 fn draw(file: &mut Option<Presentation>) {
+    set_default_camera();
     clear_background(BLACK);
     let width = window::screen_width();
     let height = window::screen_height();
@@ -76,7 +73,6 @@ fn draw(file: &mut Option<Presentation>) {
         println!("pushed");
     }
     let sidebar_width = f32::min(SIDEBAR_MAX_SIZE, width * SIDEBAR_PROPORTION);
-
     widgets::Window::new(
         hash!(),
         vec2(0.0, 0.0),
@@ -106,7 +102,6 @@ fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32) {
                     &data.paragraphs[body],
                 );
             }
-
             let texture = match data.preview.clone() {
                 Some(i) => widgets::Texture::new(i.clone())
                     .position(Vec2::new(width - i.width() - MARGIN * 4., 0.))

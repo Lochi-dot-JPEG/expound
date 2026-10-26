@@ -2,8 +2,6 @@ mod editor;
 mod expfile;
 mod slides;
 
-use std::env;
-
 use crate::expfile::Presentation;
 
 #[derive(Default)]
