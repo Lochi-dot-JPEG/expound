@@ -11,8 +11,8 @@ use svg::Document;
 use svg::node::element::Path;
 use svg::node::element::path::Data;
 
-const SLIDE_RENDER_SIZE_X: u32 = 160;
-const SLIDE_RENDER_SIZE_Y: u32 = 90;
+const SLIDE_RENDER_SIZE_X: u32 = 16;
+const SLIDE_RENDER_SIZE_Y: u32 = 9;
 
 fn _xortexture(width: usize, height: usize) -> Vec<u8> {
     let mut bytes: Vec<u8> = Vec::new();
@@ -33,11 +33,11 @@ fn _xortexture(width: usize, height: usize) -> Vec<u8> {
 pub async fn render_slide(slide: &mut Slide) {
     set_default_camera();
     let svg_data = draw_to_svg(&slide).into_bytes();
-    let texture = load_svg_to_image(&svg_data);
+    let texture = load_svg_to_image(&svg_data, 400, 300);
     slide.preview = Some(texture);
 }
 
-pub fn load_svg_to_image(svg_data: &[u8]) -> Texture2D {
+pub fn load_svg_to_image(svg_data: &[u8], width: u32, height: u32) -> Texture2D {
     let tree = {
         let mut opt = usvg::Options {
             // TODO set to the temporary folder of the loaded file
@@ -51,10 +51,16 @@ pub fn load_svg_to_image(svg_data: &[u8]) -> Texture2D {
         usvg::Tree::from_data(svg_data, &opt).unwrap()
     };
     let pixmap_size = tree.size().to_int_size();
-    let width = pixmap_size.width();
-    let height = pixmap_size.height();
+    let p_width = pixmap_size.width() as f32;
+    let p_height = pixmap_size.height() as f32;
+    let s_w = width as f32 / p_width;
+    let s_h = height as f32 / p_height;
     let mut pixmap = tiny_skia::Pixmap::new(width, height).unwrap();
-    resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
+    resvg::render(
+        &tree,
+        tiny_skia::Transform::from_scale(s_w, s_h),
+        &mut pixmap.as_mut(),
+    );
     let pixels: &[u8] = pixmap.data();
     Texture2D::from_rgba8(width as u16, height as u16, pixels)
 }
