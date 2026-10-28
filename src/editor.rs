@@ -78,12 +78,14 @@ fn draw(file: &mut Option<Presentation>) {
         println!("pushed");
     }
     let sidebar_width = f32::min(SIDEBAR_MAX_SIZE, width * SIDEBAR_PROPORTION);
+
     widgets::Window::new(
         hash!(),
         vec2(0.0, 0.0),
         vec2(sidebar_width + SCROLLBAR_WIDTH, height),
     )
     .movable(false)
+    .titlebar(false)
     .ui(&mut *root_ui(), |ui| match &file {
         Some(i) => draw_slides_list(ui, i, sidebar_width),
         None => {}
@@ -94,6 +96,7 @@ fn draw(file: &mut Option<Presentation>) {
         vec2(sidebar_width + SCROLLBAR_WIDTH, 0.0),
         vec2(width - sidebar_width - SCROLLBAR_WIDTH, height),
     )
+    .titlebar(false)
     .label("Sidebar")
     .movable(false)
     .ui(&mut *root_ui(), |ui| ui.label(Vec2::new(0., 0.), "Test"));
@@ -126,9 +129,16 @@ fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32) {
     }
 }
 
+const BACKGROUND: Color = Color::from_rgba(235, 235, 235, 255);
+
 fn create_skin() -> Skin {
     let window_style = root_ui()
         .style_builder()
+        .color(BACKGROUND)
+        .color_inactive(BACKGROUND)
+        .color_hovered(BACKGROUND)
+        .color_selected(BACKGROUND)
+        .color_selected_hovered(BACKGROUND)
         .margin(RectOffset {
             left: MARGIN,
             right: MARGIN,
