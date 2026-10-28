@@ -24,10 +24,9 @@ impl Slide {
             }
         } else {
             title = String::from("");
-
-            for i in text_blocks {
-                paragraphs.push(String::from(i));
-            }
+            //for i in text_blocks {
+            //paragraphs.push(String::from(i));
+            //}
         }
         Slide {
             title: title,

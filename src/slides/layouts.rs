@@ -34,6 +34,53 @@ pub fn get_layout_ratio(elements: u32, split_ratio: Option<f32>) -> Vec<Rect> {
                 HEIGHT - PADDING * 2.,
             ));
         }
+        3 => {
+            rects.push(Rect::new(
+                PADDING,
+                PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT - PADDING * 2.,
+            ));
+            rects.push(Rect::new(
+                split_pos + PADDING,
+                PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+            rects.push(Rect::new(
+                split_pos + PADDING,
+                HEIGHT / 2. + PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+        }
+
+        4 => {
+            rects.push(Rect::new(
+                PADDING,
+                PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+            rects.push(Rect::new(
+                PADDING,
+                HEIGHT / 2. + PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+            rects.push(Rect::new(
+                split_pos + PADDING,
+                PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+            rects.push(Rect::new(
+                split_pos + PADDING,
+                HEIGHT / 2. + PADDING,
+                split_pos - PADDING * 2.,
+                HEIGHT / 2. - PADDING * 2.,
+            ));
+        }
         _ => println!("Too many elements"),
     }
     rects

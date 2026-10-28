@@ -8,6 +8,7 @@ use macroquad::ui::{
     widgets::{self, Group},
 };
 use macroquad::window;
+use std::time::Duration;
 use std::{env, println};
 
 enum Messages {
@@ -47,8 +48,12 @@ pub async fn main() {
             for slide in &mut i.slides {
                 waits.push(slide.render());
             }
+            let mut last = std::time::Instant::now();
             for wait in waits {
                 wait.await;
+                let now = std::time::Instant::now();
+                println!("Rendered in {}", now.duration_since(last).as_secs_f32());
+                last = now;
             }
         }
         None => {}
@@ -78,12 +83,20 @@ fn draw(file: &mut Option<Presentation>) {
         vec2(0.0, 0.0),
         vec2(sidebar_width + SCROLLBAR_WIDTH, height),
     )
-    .label("Sidebar")
     .movable(false)
     .ui(&mut *root_ui(), |ui| match &file {
         Some(i) => draw_slides_list(ui, i, sidebar_width),
         None => {}
     });
+
+    widgets::Window::new(
+        hash!(),
+        vec2(sidebar_width + SCROLLBAR_WIDTH, 0.0),
+        vec2(width - sidebar_width - SCROLLBAR_WIDTH, height),
+    )
+    .label("Sidebar")
+    .movable(false)
+    .ui(&mut *root_ui(), |ui| ui.label(Vec2::new(0., 0.), "Test"));
 }
 
 fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32) {

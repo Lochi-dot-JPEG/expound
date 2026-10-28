@@ -12,7 +12,7 @@ use macroquad::{
 };
 use resvg::{
     tiny_skia::{self, PremultipliedColorU8},
-    usvg,
+    usvg::{self, layout},
 };
 
 use crate::slides::Slide;
@@ -42,14 +42,6 @@ fn xortexture(width: usize, height: usize) -> Vec<u8> {
 }
 
 pub async fn render_slide(slide: &mut Slide) {
-    let mut element_count = 0;
-    element_count += 1; // Title
-    for _ in &slide.paragraphs {
-        element_count += 1;
-    }
-    for _ in &slide.images {
-        element_count += 1;
-    }
     set_default_camera();
     let svg_data = draw_to_svg(&slide).into_bytes();
     let texture = load_svg_to_image(&svg_data);
@@ -75,12 +67,45 @@ pub fn load_svg_to_image(svg_data: &[u8]) -> Texture2D {
     let mut pixmap = tiny_skia::Pixmap::new(width, height).unwrap();
     resvg::render(&tree, tiny_skia::Transform::default(), &mut pixmap.as_mut());
     let pixels: &[u8] = pixmap.data();
-
-    println!("length is {}", pixmap.data().len());
     Texture2D::from_rgba8(width as u16, height as u16, pixels)
 }
 
 pub fn draw_to_svg(slide: &Slide) -> String {
+    let mut element_count = 0;
+    element_count += 1; // Title
+    for _ in &slide.paragraphs {
+        element_count += 1;
+    }
+    for _ in &slide.images {
+        element_count += 1;
+    }
+
+    let layout = layouts::get_layout_ratio(element_count, None);
+
+    let mut paths: Vec<Path> = Vec::new();
+
+    for rect in layout {
+        let yscale = rect.y / 3. * SLIDE_RENDER_SIZE_Y as f32;
+        let xscale = rect.x / 4. * SLIDE_RENDER_SIZE_X as f32;
+        let wscale = rect.w / 4. * SLIDE_RENDER_SIZE_X as f32;
+        let hscale = rect.h / 3. * SLIDE_RENDER_SIZE_Y as f32;
+
+        let data = Data::new()
+            .move_to((xscale, yscale))
+            .line_by((0, hscale))
+            .line_by((wscale, 0))
+            .line_by((0, -hscale))
+            .close();
+
+        let path = Path::new()
+            .set("fill", "red")
+            .set("stroke", "red")
+            .set("stroke-width", 0)
+            .set("d", data);
+
+        paths.push(path);
+    }
+
     let data = Data::new()
         .move_to((0, 0))
         .line_by((0, 50))
@@ -94,9 +119,12 @@ pub fn draw_to_svg(slide: &Slide) -> String {
         .set("stroke-width", 3)
         .set("d", data);
 
-    let document = Document::new()
-        .set("viewBox", (0, 0, SLIDE_RENDER_SIZE_X, SLIDE_RENDER_SIZE_Y))
-        .add(path);
+    let document = paths.into_iter().fold(
+        Document::new()
+            .set("viewBox", (0, 0, SLIDE_RENDER_SIZE_X, SLIDE_RENDER_SIZE_Y))
+            .add(path),
+        |document, path| document.add(path),
+    );
 
     let path = format!("./{}.svg", slide.uuid.to_string());
     println!("path is {}", path);
