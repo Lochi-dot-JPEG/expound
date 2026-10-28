@@ -1,18 +1,7 @@
-use macroquad::{
-    camera::{Camera2D, set_camera, set_default_camera},
-    color::*,
-    math::Rect,
-    miniquad::{self, CursorIcon::Text},
-    prelude::ImageFormat,
-    shapes::draw_circle,
-    text::{self, draw_text},
-    texture::{Image, Texture2D, draw_texture, load_image, render_target},
-    ui::canvas,
-    window::clear_background,
-};
+use macroquad::{camera::set_default_camera, texture::Texture2D};
 use resvg::{
-    tiny_skia::{self, PremultipliedColorU8},
-    usvg::{self, layout},
+    tiny_skia::{self},
+    usvg::{self},
 };
 
 use crate::slides::Slide;
@@ -25,7 +14,7 @@ use svg::node::element::path::Data;
 const SLIDE_RENDER_SIZE_X: u32 = 160;
 const SLIDE_RENDER_SIZE_Y: u32 = 90;
 
-fn xortexture(width: usize, height: usize) -> Vec<u8> {
+fn _xortexture(width: usize, height: usize) -> Vec<u8> {
     let mut bytes: Vec<u8> = Vec::new();
     bytes.resize(width * height * 4, 0u8);
     for x in 0..width {
