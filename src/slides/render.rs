@@ -1,18 +1,22 @@
-use macroquad::{camera::set_default_camera, texture::Texture2D};
+use macroquad::{camera::set_default_camera, experimental::scene::add_node, texture::Texture2D};
 use resvg::{
     tiny_skia::{self},
-    usvg::{self},
+    usvg::{self, TextChunk, TextSpan, Tree},
 };
 
-use crate::slides::Slide;
-use crate::slides::layouts;
+use crate::slides::*;
 use std::{format, println};
-use svg::Document;
-use svg::node::element::Path;
-use svg::node::element::path::Data;
+use svg::node::element::{Path, SVG};
+use svg::node::{Attributes, element::path::Data};
+use svg::{Document, node::Text};
 
 const SLIDE_RENDER_SIZE_X: u32 = 16;
 const SLIDE_RENDER_SIZE_Y: u32 = 9;
+
+enum Element {
+    Image(String),
+    Paragraph(String),
+}
 
 fn _xortexture(width: usize, height: usize) -> Vec<u8> {
     let mut bytes: Vec<u8> = Vec::new();
@@ -65,25 +69,34 @@ pub fn load_svg_to_image(svg_data: &[u8], width: u32, height: u32) -> Texture2D 
     Texture2D::from_rgba8(width as u16, height as u16, pixels)
 }
 
-pub fn draw_to_svg(slide: &Slide) -> String {
+pub fn draw_to_svg(slide: &Slide, aspect: SlideAspect) -> String {
+    // Parse elements from slide
     let mut element_count = 0;
-    element_count += 1; // Title
-    for _ in &slide.paragraphs {
+    let mut elements: Vec<Element> = Vec::new();
+    for p in &slide.paragraphs {
         element_count += 1;
+        elements.push(Element::Paragraph(String::from(p)));
     }
-    for _ in &slide.images {
+    for i in &slide.images {
         element_count += 1;
+        elements.push(Element::Paragraph(String::from(&i.uri)));
     }
 
-    let layout = layouts::get_layout_ratio(element_count, None);
+    // Calculate layout
+    let layout = layouts::get_layout_ratio(element_count, None, aspect);
 
     let mut paths: Vec<Path> = Vec::new();
+    let mut texts: Vec<Text> = Vec::new();
 
-    for rect in layout {
-        let yscale = rect.y / 3. * SLIDE_RENDER_SIZE_Y as f32;
-        let xscale = rect.x / 4. * SLIDE_RENDER_SIZE_X as f32;
-        let wscale = rect.w / 4. * SLIDE_RENDER_SIZE_X as f32;
-        let hscale = rect.h / 3. * SLIDE_RENDER_SIZE_Y as f32;
+    // TODO draw title separately from other arranged elements
+
+    for i in 0..layout.len() {
+        let rect = &layout[i];
+        let element = &elements[i];
+        let yscale = rect.y.length_from_reference(3.) / 3. * SLIDE_RENDER_SIZE_Y as f32;
+        let xscale = rect.x.length_from_reference(4.) / 4. * SLIDE_RENDER_SIZE_X as f32;
+        let wscale = rect.w.length_from_reference(4.) / 4. * SLIDE_RENDER_SIZE_X as f32;
+        let hscale = rect.h.length_from_reference(3.) / 3. * SLIDE_RENDER_SIZE_Y as f32;
 
         let data = Data::new()
             .move_to((xscale, yscale))
@@ -92,6 +105,16 @@ pub fn draw_to_svg(slide: &Slide) -> String {
             .line_by((0, -hscale))
             .close();
 
+        match element {
+            Element::Image(s) => {
+                let text = Text::new(s);
+                texts.push(text);
+            }
+            Element::Paragraph(s) => {
+                let text = Text::new(s);
+                texts.push(text);
+            }
+        }
         let path = Path::new()
             .set("fill", "red")
             .set("stroke", "red")
@@ -114,15 +137,19 @@ pub fn draw_to_svg(slide: &Slide) -> String {
         .set("stroke-width", 3)
         .set("d", data);
 
-    let document = paths.into_iter().fold(
+    let mut document = paths.into_iter().fold(
         Document::new()
             .set("viewBox", (0, 0, SLIDE_RENDER_SIZE_X, SLIDE_RENDER_SIZE_Y))
             .add(path),
         |document, path| document.add(path),
     );
 
-    let path = format!("./{}.svg", slide.uuid.to_string());
-    println!("path is {}", path);
-    //svg::save(&path, &document).unwrap();
+    for t in texts {
+        println!("adds text {}", t);
+        let text = Text::new("SJDLKF;k");
+        let mut attributes = Attributes::new();
+        document = document.add(t);
+    }
+
     document.to_string()
 }

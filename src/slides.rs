@@ -45,6 +45,11 @@ pub struct SlideImage {
     pub uri: String,
 }
 
+pub struct SlideAspect {
+    x: u32,
+    y: u32,
+}
+
 impl SlideImage {
     pub fn new(uri: &str) -> SlideImage {
         // TODO check that uri is valid

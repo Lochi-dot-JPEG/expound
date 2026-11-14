@@ -8,6 +8,7 @@ macroquad = "0.4.16"
 nokhwa = "0.10.11"
 resvg = "0.48.1"
 svg = "0.18.0"
+svgcompose = { path = "svgcompose" }
 
 [dependencies.uuid]
 version = "1.28.0"

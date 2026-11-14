@@ -18,7 +18,9 @@ struct State {
 const SIDEBAR_PROPORTION: f32 = 0.33;
 const SIDEBAR_MAX_SIZE: f32 = 500.;
 const MARGIN: f32 = 12.;
-const SLIDE_PREVIEW_HEIGHT: f32 = 90. + MARGIN * 2.;
+const SLIDE_PREVIEW_HEIGHT: f32 = 90.;
+const SLIDE_PREVIEW_WIDTH: f32 = 160.;
+const SLIDE_PREVIEW_BOX_HEIGHT: f32 = SLIDE_PREVIEW_HEIGHT + MARGIN * 2.;
 const SCROLLBAR_WIDTH: f32 = 12.;
 
 #[macroquad::main("Expound")]
@@ -147,7 +149,7 @@ fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32, state: &mu
     for i in 0..file.slides.len() {
         Group::new(
             hash!("slide", i),
-            Vec2::new(width - MARGIN * 2., SLIDE_PREVIEW_HEIGHT),
+            Vec2::new(width - MARGIN * 2., SLIDE_PREVIEW_BOX_HEIGHT),
         )
         .layout(ui::Layout::Vertical)
         .ui(ui, |ui| {
@@ -159,10 +161,11 @@ fn draw_slides_list(ui: &mut ui::Ui, file: &Presentation, width: f32, state: &mu
                     &data.paragraphs[body],
                 );
             }
+
             let texture = match data.preview.clone() {
                 Some(i) => widgets::Texture::new(i.clone())
-                    .position(Vec2::new(width - i.width() - MARGIN * 4., 0.))
-                    .size(160., 90.)
+                    .position(Vec2::new(width - SLIDE_PREVIEW_WIDTH - MARGIN * 4., 0.))
+                    .size(SLIDE_PREVIEW_WIDTH, SLIDE_PREVIEW_HEIGHT)
                     .ui(ui),
                 None => false,
             };

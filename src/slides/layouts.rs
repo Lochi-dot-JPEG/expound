@@ -1,84 +1,88 @@
-use macroquad::math::Rect;
+use svgcompose::{Pc, Px, Rect};
 
-const HEIGHT: f32 = 3.0;
-const WIDTH: f32 = 4.0;
-const PADDING: f32 = 0.1;
+use crate::slides::SlideAspect;
 
-pub fn get_layout_ratio(elements: u32, split_ratio: Option<f32>) -> Vec<Rect> {
+const MARGIN: f32 = 0.05;
+
+pub fn get_layout_ratio(elements: u32, split_ratio: Option<f32>, aspect: SlideAspect) -> Vec<Rect> {
     let mut rects: Vec<Rect> = Vec::new();
+    let width = aspect.x as f32;
+    let height = aspect.y as f32;
+    let scale = (aspect.x + aspect.y) as f32 / 2.;
+    let scaled_margin = MARGIN * scale;
 
     let split_pos = match split_ratio {
-        Some(r) => WIDTH * r,
-        None => WIDTH * 0.5,
+        Some(r) => width * r,
+        None => width * 0.5,
     };
 
     match elements {
         0 => {}
         1 => rects.push(Rect::new(
-            PADDING,
-            PADDING,
-            WIDTH - PADDING * 2.,
-            HEIGHT - PADDING * 2.,
+            Px(scaled_margin),
+            Px(scaled_margin),
+            Px(width - scaled_margin * 2.),
+            Px(height - scaled_margin * 2.),
         )),
         2 => {
             rects.push(Rect::new(
-                PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT - PADDING * 2.,
+                Px(scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                split_pos + PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT - PADDING * 2.,
+                Px(split_pos + scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height - scaled_margin * 2.),
             ));
         }
         3 => {
             rects.push(Rect::new(
-                PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT - PADDING * 2.,
+                Px(scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                split_pos + PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(split_pos + scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                split_pos + PADDING,
-                HEIGHT / 2. + PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(split_pos + scaled_margin),
+                Px(height / 2. + scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
         }
 
         4 => {
             rects.push(Rect::new(
-                PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                PADDING,
-                HEIGHT / 2. + PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(scaled_margin),
+                Px(height / 2. + scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                split_pos + PADDING,
-                PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(split_pos + scaled_margin),
+                Px(scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
             rects.push(Rect::new(
-                split_pos + PADDING,
-                HEIGHT / 2. + PADDING,
-                split_pos - PADDING * 2.,
-                HEIGHT / 2. - PADDING * 2.,
+                Px(split_pos + scaled_margin),
+                Px(height / 2. + scaled_margin),
+                Px(split_pos - scaled_margin * 2.),
+                Px(height / 2. - scaled_margin * 2.),
             ));
         }
         _ => println!("Too many elements"),
