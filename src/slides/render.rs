@@ -1,17 +1,15 @@
 use macroquad::{camera::set_default_camera, experimental::scene::add_node, texture::Texture2D};
 use resvg::{
-    tiny_skia::{self},
+    tiny_skia::{self, FillRule::Winding},
     usvg::{self, TextChunk, TextSpan, Tree},
 };
+use svgcompose::{
+    File, Pc, Px, Rect,
+    elements::{Color, Rectangle},
+};
 
-use crate::slides::*;
-use std::{format, println};
-use svg::node::element::{Path, SVG};
-use svg::node::{Attributes, element::path::Data};
-use svg::{Document, node::Text};
-
-const SLIDE_RENDER_SIZE_X: u32 = 16;
-const SLIDE_RENDER_SIZE_Y: u32 = 9;
+use crate::{expfile::PresentationConfig, slides::*};
+use std::iter::zip;
 
 enum Element {
     Image(String),
@@ -34,10 +32,14 @@ fn _xortexture(width: usize, height: usize) -> Vec<u8> {
     return bytes;
 }
 
-pub async fn render_slide(slide: &mut Slide) {
+pub async fn render_slide(slide: &mut Slide, config: &PresentationConfig, y_resolution: u32) {
     set_default_camera();
-    let svg_data = draw_to_svg(&slide).into_bytes();
-    let texture = load_svg_to_image(&svg_data, 400, 300);
+    let svg_data = draw_to_svg(&slide, &config.aspect).into_bytes();
+    let texture = load_svg_to_image(
+        &svg_data,
+        y_resolution / config.aspect.y * config.aspect.x,
+        y_resolution,
+    );
     slide.preview = Some(texture);
 }
 
@@ -69,7 +71,7 @@ pub fn load_svg_to_image(svg_data: &[u8], width: u32, height: u32) -> Texture2D 
     Texture2D::from_rgba8(width as u16, height as u16, pixels)
 }
 
-pub fn draw_to_svg(slide: &Slide, aspect: SlideAspect) -> String {
+pub fn draw_to_svg(slide: &Slide, aspect: &SlideAspect) -> String {
     // Parse elements from slide
     let mut element_count = 0;
     let mut elements: Vec<Element> = Vec::new();
@@ -83,73 +85,38 @@ pub fn draw_to_svg(slide: &Slide, aspect: SlideAspect) -> String {
     }
 
     // Calculate layout
-    let layout = layouts::get_layout_ratio(element_count, None, aspect);
-
-    let mut paths: Vec<Path> = Vec::new();
-    let mut texts: Vec<Text> = Vec::new();
+    let layout_rects = layouts::get_element_rects(element_count, None, &aspect);
 
     // TODO draw title separately from other arranged elements
 
-    for i in 0..layout.len() {
-        let rect = &layout[i];
-        let element = &elements[i];
-        let yscale = rect.y.length_from_reference(3.) / 3. * SLIDE_RENDER_SIZE_Y as f32;
-        let xscale = rect.x.length_from_reference(4.) / 4. * SLIDE_RENDER_SIZE_X as f32;
-        let wscale = rect.w.length_from_reference(4.) / 4. * SLIDE_RENDER_SIZE_X as f32;
-        let hscale = rect.h.length_from_reference(3.) / 3. * SLIDE_RENDER_SIZE_Y as f32;
+    // Create svg file
+    let mut file = File::new();
+    file.width(aspect.x);
+    file.height(aspect.y);
 
-        let data = Data::new()
-            .move_to((xscale, yscale))
-            .line_by((0, hscale))
-            .line_by((wscale, 0))
-            .line_by((0, -hscale))
-            .close();
+    // Add background
+    let full_rect = Rect::new(Px(0.), Px(0.), Pc(100.), Pc(100.));
+    let background = Rectangle::new(full_rect).fill(Color::new(196, 196, 196));
+    file.append_element(background.to_element());
 
+    // Loop through pairs of each element and its respective rect and add it to the svg file
+    for (element, rect) in zip(elements, layout_rects) {
+        //let yscale = rect.y.length_from_reference(height);
+        //let xscale = rect.x.length_from_reference(width);
+        //let wscale = rect.w.length_from_reference(width);
+        //let hscale = rect.h.length_from_reference(height);
         match element {
-            Element::Image(s) => {
-                let text = Text::new(s);
-                texts.push(text);
+            Element::Image(_uri) => {
+                let rectangle = Rectangle::new(rect);
+                file.append_element(rectangle.to_element());
             }
-            Element::Paragraph(s) => {
-                let text = Text::new(s);
-                texts.push(text);
+            Element::Paragraph(_text) => {
+                let rectangle = Rectangle::new(rect);
+                file.append_element(rectangle.to_element());
             }
         }
-        let path = Path::new()
-            .set("fill", "red")
-            .set("stroke", "red")
-            .set("stroke-width", 0)
-            .set("d", data);
-
-        paths.push(path);
     }
 
-    let data = Data::new()
-        .move_to((0, 0))
-        .line_by((0, 50))
-        .line_by((50, 0))
-        .line_by((0, -50))
-        .close();
-
-    let path = Path::new()
-        .set("fill", "none")
-        .set("stroke", "black")
-        .set("stroke-width", 3)
-        .set("d", data);
-
-    let mut document = paths.into_iter().fold(
-        Document::new()
-            .set("viewBox", (0, 0, SLIDE_RENDER_SIZE_X, SLIDE_RENDER_SIZE_Y))
-            .add(path),
-        |document, path| document.add(path),
-    );
-
-    for t in texts {
-        println!("adds text {}", t);
-        let text = Text::new("SJDLKF;k");
-        let mut attributes = Attributes::new();
-        document = document.add(t);
-    }
-
-    document.to_string()
+    let render = file.render();
+    render
 }

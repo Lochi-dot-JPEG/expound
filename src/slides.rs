@@ -3,6 +3,8 @@ use macroquad::{texture::Texture2D, ui::widgets};
 mod layouts;
 mod render;
 use uuid::Uuid;
+
+use crate::expfile::PresentationConfig;
 pub struct Slide {
     pub title: String,
     pub paragraphs: Vec<String>,
@@ -37,8 +39,8 @@ impl Slide {
         }
     }
 
-    pub async fn render(&mut self) {
-        render::render_slide(self).await
+    pub async fn render(&mut self, config: &PresentationConfig, y_resolution: u32) {
+        render::render_slide(self, config, y_resolution).await
     }
 }
 pub struct SlideImage {
@@ -46,8 +48,8 @@ pub struct SlideImage {
 }
 
 pub struct SlideAspect {
-    x: u32,
-    y: u32,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl SlideImage {

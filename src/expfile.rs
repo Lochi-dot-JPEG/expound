@@ -1,14 +1,28 @@
-use crate::{expfile, slides};
+use crate::{
+    expfile,
+    slides::{self, SlideAspect},
+};
 use slides::{Slide, SlideImage};
 use std::{fs, io};
 
 pub struct Presentation {
     pub slides: Vec<Slide>,
+    pub config: PresentationConfig,
+}
+pub struct PresentationConfig {
+    pub aspect: SlideAspect,
+    pub fontSize: f32, // the font size is percentages of the screen height
 }
 
 /// Loads a markup file
 pub fn load_file(filename: &str) -> Result<Presentation, io::Error> {
     let content = fs::read_to_string(filename)?;
+
+    // TODO extract frontmatter for presentation configuration
+    let config = PresentationConfig {
+        aspect: SlideAspect { x: 16, y: 9 },
+        fontSize: 0.03,
+    };
 
     let slide_markup = content.split("---").map(|a| a.trim());
 
@@ -17,7 +31,7 @@ pub fn load_file(filename: &str) -> Result<Presentation, io::Error> {
         slides.push(expfile::parse_slide(&slide));
     }
 
-    Ok(Presentation { slides: slides })
+    Ok(Presentation { slides, config })
 }
 
 /// Parses a slide from markup

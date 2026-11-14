@@ -43,7 +43,7 @@ pub async fn main() {
         Some(i) => {
             let mut waits = Vec::new();
             for slide in &mut i.slides {
-                waits.push(slide.render());
+                waits.push(slide.render(&i.config, SLIDE_PREVIEW_HEIGHT as u32));
             }
             let mut last = std::time::Instant::now();
             for wait in waits {

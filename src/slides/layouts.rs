@@ -2,9 +2,13 @@ use svgcompose::{Pc, Px, Rect};
 
 use crate::slides::SlideAspect;
 
-const MARGIN: f32 = 0.05;
+const MARGIN: f32 = 0.025;
 
-pub fn get_layout_ratio(elements: u32, split_ratio: Option<f32>, aspect: SlideAspect) -> Vec<Rect> {
+pub fn get_element_rects(
+    elements: u32,
+    split_ratio: Option<f32>,
+    aspect: &SlideAspect,
+) -> Vec<Rect> {
     let mut rects: Vec<Rect> = Vec::new();
     let width = aspect.x as f32;
     let height = aspect.y as f32;
